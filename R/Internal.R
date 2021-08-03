@@ -7,7 +7,7 @@
 #' @param n
 #' @param min_per_bin
 #' @importFrom magrittr `%>%` `%<>%`
-#' @importFrom stats quantile ecdf
+#' @importFrom stats quantile ecdf approxfun integrate
 #' @importFrom dplyr summarise group_by n
 #' @importFrom  igraph graph_from_data_frame bipartite_mapping degree V E as_incidence_matrix induced_subgraph
 #' @keywords internal
@@ -16,7 +16,11 @@
 
 
 
-LCC_Calc = function(PPIg,bins = 100, nodes, n, min_per_bin = 20){
+LCC_Calc = function(PPIg,
+                    bins = 100,
+                    nodes,
+                    n,
+                    min_per_bin = 20){
   `%<>%` <- magrittr::`%<>%`
   `%>%` <- magrittr::`%>%`
   # bin = NULL
@@ -24,14 +28,17 @@ LCC_Calc = function(PPIg,bins = 100, nodes, n, min_per_bin = 20){
   BINS = binr::bins(DG$., target.bins = bins,
                     exact.groups = FALSE,
                     minpts = min_per_bin)
-  numbers_factors = cut(DG$., binr::bins.getvals(BINS),
-                        labels = names(BINS$binct)) %>% as.numeric()
+  numbers_factors = cut(DG$.,
+                        binr::bins.getvals(BINS),
+                        labels = names(BINS$binct)) %>%
+    as.numeric()
   DG$bin = numbers_factors
   DG$names = row.names(DG)
   nodes_ppi = subset(DG, DG$names %in% nodes)
   bins_get = nodes_ppi %>%
     dplyr::group_by(bin) %>%
-    dplyr::summarise(., n = dplyr::n()) %>% as.data.frame()
+    dplyr::summarise(., n = dplyr::n()) %>%
+    as.data.frame()
 
   OUT = list()
   for ( j in 1:n){
@@ -48,7 +55,11 @@ LCC_Calc = function(PPIg,bins = 100, nodes, n, min_per_bin = 20){
   return(OUT)
 }
 
-LCC_p = function(n = 1000, PPI_g, Vn, bins = NULL, min_per_bin){
+LCC_p = function(n = 1000,
+                 PPI_g,
+                 Vn,
+                 bins = NULL,
+                 min_per_bin){
   `%<>%` <- magrittr::`%<>%`
   `%>%` <- magrittr::`%>%`
 
@@ -116,7 +127,8 @@ bins <- function(g, bins, min_bin , nodes){
 }
 
 
-boot_distance_aux <- function(n, bins_get, g, source, targets, DG, proximity){
+boot_distance_aux <- function(n, bins_get, g,
+                              source, targets, DG, proximity){
   OUT <- list()
   for ( j in 1:n){
     resampled <- list()
@@ -130,7 +142,10 @@ boot_distance_aux <- function(n, bins_get, g, source, targets, DG, proximity){
     }
     else if(proximity == "average"){
       OUT[[j]] <- proximity_average(g, new_nodes, targets)
+    }    else if(proximity == "weighted"){
+      OUT[[j]] <- proximity_average_weighted(g, new_nodes, targets)
     }
+
   }
   return(OUT)
 }
@@ -148,11 +163,23 @@ boot_distance = function(g, source, targets, bins, min_bin, n, proximity){
 boot_distance_IC= function(x, alpha, d){
   IC = stats::quantile(x, c(1-alpha/2, alpha/2))
 
-  d_fun <- stats::ecdf (x)
-  p_gt = 1 - d_fun(d)
-  p_lt = d_fun(d)
+  # d_fun <- stats::ecdf (x)
+  # p_gt = 1 - d_fun(d)
+  # p_lt = d_fun(d)
+  #
+  # dens = stats::density(x)
+  # p2_gt = sum(dens$y[dens$x>d])
+  # p2_lt = sum(dens$y[dens$x<d])
+
+  p = pvals(x = x, val = d)
+
   Z = (d - mean(x))/sd(x)
-  return(list(IC = IC, p_gt = p_gt, p_lt = p_lt, Z = Z))
+  return(list(IC = IC,
+              # p_gt = p_gt,
+              # p_lt = p_lt,
+              p_gt = p$p_gt,
+              p_lt = p$p_lt,
+              Z = Z))
 }
 
 boot_distance_p = function(g, source, targets, bins, min_bin, n, d, alpha, proximity){
@@ -162,4 +189,30 @@ boot_distance_p = function(g, source, targets, bins, min_bin, n, d, alpha, proxi
   return(y)
 }
 
+#############################
 
+pvals = function(x, val){
+
+  d = stats::density(x)
+
+  xx <- d$x
+  dx <- xx[2L] - xx[1L]
+  yy <- d$y
+
+  f <- stats::approxfun(xx, yy, rule = 2)
+  C <- cubature::cubintegrate(f, min(xx), max(xx), method = "pcubature")$integral
+  p.unscaled <- cubature::cubintegrate(f, val, max(xx), method = "pcubature")$integral
+  p.scaled_gt <- p.unscaled / C
+
+  p.unscaled <- cubature::cubintegrate(f,  min(xx), val, method = "pcubature")$integral
+  p.scaled_lt <- p.unscaled / C
+
+  p.scaled_gt = ifelse(p.scaled_gt > 1, 1, p.scaled_gt)
+  p.scaled_gt = ifelse(p.scaled_gt < 0, 0, p.scaled_gt)
+
+  p.scaled_lt = ifelse(p.scaled_lt > 1, 1, p.scaled_lt)
+  p.scaled_lt = ifelse(p.scaled_lt < 0, 0, p.scaled_lt)
+
+  return(list(p_gt = p.scaled_gt,
+              p_lt = p.scaled_lt))
+}

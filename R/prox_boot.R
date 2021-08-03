@@ -7,6 +7,7 @@
 #' @param N Number of randomizations.
 #' @param bins the number os bins for the degree preserving randomization.
 #' @param min_per_bin the minimum size of each bin.
+#' @param weighted consider a weighted graph? TRUE/FALSE
 #' @importFrom dplyr pull filter bind_rows
 #' @description Calculates the average proximity from a set of targets to a set of source nodes.
 #' It is calculate using a degree preserving randomization. It is calculated as described in
@@ -22,6 +23,7 @@
 #' net$value = 1
 #' net =  CoDiNA::OrderNames(net)
 #' net = unique(net)
+#' net$weight = runif(nrow(net))
 #'
 #' g <- igraph::graph_from_data_frame(net, directed = FALSE )
 #' S = c("N", "A", "F", "I")
@@ -35,11 +37,20 @@
 #'  bins = 5,
 #'  min_per_bin = 2)
 #'
-#'
-avr_proximity_multiple_target_sets = function(set, G, ST, source,
+#' avr_proximity_multiple_target_sets(set = c('T1', 'T2'),
+#' G = g,
+#'  source = S,
+#'  ST = rbind(T1,T2),
+#'  bins = 5,
+#'  min_per_bin = 2, weighted = TRUE)
+avr_proximity_multiple_target_sets = function(set,
+                                              G,
+                                              ST,
+                                              source,
                                               N = 1000,
                                               bins = 100,
-                                              min_per_bin  = 20){
+                                              min_per_bin  = 20,
+                                              weighted = FALSE){
   Out_NR = list()
   pb <- txtProgressBar(min = 0, max = (length(set)), style = 3)
   for (D in 1:length(set)){
@@ -50,15 +61,33 @@ avr_proximity_multiple_target_sets = function(set, G, ST, source,
     t = DT [DT %in% V(G)$name]%>% unique
 
     if(length(s)> 0 & length(t)> 0){
-      d = suppressMessages(proximity_average(G, targets = t, source = s))
+      if(weighted == FALSE){
+        d = suppressMessages(proximity_average(G, targets = t, source = s))
+
       # targets are the DT -> They are resampled
-      p = suppressMessages(boot_distance_p(G, targets = t, source = s,
+      p = suppressMessages(boot_distance_p(G,
+                                           targets = t,
+                                           source = s,
                                            bins = bins,
                                            min_bin  = min_per_bin,
                                            n = N,
                                            d = d,
                                            alpha = 0.05,
                                            proximity  = "average"))
+      } else if(weighted == TRUE){
+        d = suppressMessages(proximity_average_weighted(G, targets = t, source = s))
+        # targets are the DT -> They are resampled
+        p = suppressMessages(boot_distance_p(G,
+                                             targets = t,
+                                             source = s,
+                                             bins = bins,
+                                             min_bin  = min_per_bin,
+                                             n = N,
+                                             d = d,
+                                             alpha = 0.05,
+                                             proximity  = "weighted"))
+      }
+
       Out_NR[[D]] = data.frame(Drug = set[D],
                                targets = length(DT),
                                targets_G = length(t),
@@ -68,7 +97,8 @@ avr_proximity_multiple_target_sets = function(set, G, ST, source,
                                IC_2.5 = p$IC[2],
                                p_gt = p$p_gt,
                                p_lt = p$p_lt,
-                               Z = p$Z, row.names =set[D] )
+                               Z = p$Z,
+                               row.names =set[D] )
     }
   }
   close(pb)
