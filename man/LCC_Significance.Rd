@@ -2,7 +2,7 @@
 % Please edit documentation in R/LCC_Significance.R
 \name{LCC_Significance}
 \alias{LCC_Significance}
-\title{LCC_Significance}
+\title{LCC Significance}
 \usage{
 LCC_Significance(
   N = N,
@@ -20,7 +20,7 @@ LCC_Significance(
 
 \item{G}{The  graph of interest (often, in NetMed it is an interactome - PPI).}
 
-\item{bins}{the number os bins for the degree preserving randomization.}
+\item{bins}{the number os bins for the degree preserving randomization. When bins = 1, assumes a uniform distribution for nodes.}
 
 \item{hypothesis}{are you expecting an LCC greater or smaller than the average?}
 
@@ -33,7 +33,8 @@ a list with the LCC
 - $sd the sd LCC of the randomizations
 - $Z The score
 - $LCC the LCC of the given targets
-- $emp\_p the empirical p-value for the LCC
+- $emp_p the empirical p-value for the LCC
+- $rLCC the relative LCC
 }
 \description{
 Calculates the Largest Connected Component (LCC) from a given graph, and calculates its significance using a degree preserving approach.
@@ -51,11 +52,11 @@ net = unique(net)
 g <- igraph::graph_from_data_frame(net, directed = FALSE )
 plot(g)
 targets = c("I", "H", "F", "E")
-LCC_Significance(N = 100,
-                 Targets = targets,
-                                  G = g,
-                                  bins = 5,
+ LCC_Significance(N = 100,
+                   Targets = targets,
+                                    G = g,
+                                  bins = 1,
                                   min_per_bin = 2)
-                                  # in a real interactome, please use the default
+
 
 }
