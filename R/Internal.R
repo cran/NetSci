@@ -1,11 +1,11 @@
 #' Internal
 #' @description  Internal functions. Not exported.
 #'
-#' @param PPIg
-#' @param bins
-#' @param nodes
-#' @param n
-#' @param min_per_bin
+#' @param PPIg network
+#' @param bins number of bins
+#' @param nodes nodes
+#' @param n number of resamples
+#' @param min_per_bin minimum number of nodes per bin
 #' @importFrom magrittr `%>%` `%<>%`
 #' @importFrom stats quantile ecdf approxfun integrate
 #' @importFrom dplyr summarise group_by n

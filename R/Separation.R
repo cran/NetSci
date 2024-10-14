@@ -85,7 +85,7 @@ separation = function(G, ST){
     }
   }
   close(pb)
-  message("Done..\n")
+  message("Done...\n")
   colnames(S_ab)= rownames(S_ab) = d
   colnames(S_ab.tmp)= rownames(S_ab.tmp) = d
   return(list(Sab = S_ab, Dab = S_ab.tmp))

@@ -17,6 +17,9 @@ separation_Significance(G, ST, Threads = 2, N = 1000, correct_by_target = TRUE)
 
 \item{correct_by_target}{TRUE by default. If you want to use the set of targets for the permutation or the full network.}
 }
+\value{
+the separation and distance of modules and its p-value.
+}
 \description{
 Calculates the separation of two set of targets on a network and assigns a p-value to it.
 Often used to measure separation of disease modules in a interactome.

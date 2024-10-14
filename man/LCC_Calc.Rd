@@ -6,6 +6,17 @@
 \usage{
 LCC_Calc(PPIg, bins = 100, nodes, n, min_per_bin = 20)
 }
+\arguments{
+\item{PPIg}{network}
+
+\item{bins}{number of bins}
+
+\item{nodes}{nodes}
+
+\item{n}{number of resamples}
+
+\item{min_per_bin}{minimum number of nodes per bin}
+}
 \description{
 Internal functions. Not exported.
 }

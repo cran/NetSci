@@ -1,7 +1,5 @@
 #' Global Definition
 #'
-
-#' @docType package
 #' @name NetSci
 #' @importFrom  utils install.packages
 #' @description Basic global variables to make sure the package runs.

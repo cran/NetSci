@@ -14,6 +14,7 @@
 #' @importFrom igraph shortest.paths distances graph_from_data_frame bipartite_mapping degree V E as_incidence_matrix induced_subgraph
 #' @importFrom dplyr filter select  group_by summarise bind_rows
 #' @importFrom parallel makeCluster clusterExport clusterApplyLB stopCluster
+#' @return the separation and distance of modules and its p-value.
 #' @export
 #'
 #' @examples
